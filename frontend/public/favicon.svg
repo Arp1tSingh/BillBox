@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BillBox">
+  <rect width="512" height="512" rx="112" fill="#0f766e" />
+  <path
+    d="M150 108h212a20 20 0 0 1 20 20v286l-44-28-42 28-42-28-42 28-42-28-40 28V128a20 20 0 0 1 20-20Z"
+    fill="#f8fafc"
+  />
+  <path d="M204 188h104M204 246h104M204 304h68" stroke="#0f766e" stroke-width="22" stroke-linecap="round" />
+</svg>
