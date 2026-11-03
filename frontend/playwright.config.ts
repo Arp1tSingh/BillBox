@@ -45,6 +45,7 @@ export default defineConfig({
       env: {
         ...cleanEnv,
         ENVIRONMENT: 'test',
+        GEMINI_MOCK: '1',
         SUPABASE_URL: env.supabaseUrl,
         SUPABASE_ANON_KEY: env.anonKey,
         SUPABASE_SERVICE_ROLE_KEY: env.serviceRoleKey,

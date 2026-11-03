@@ -90,9 +90,9 @@ class HouseholdService:
 
         return await self._view(household, "member")
 
-    async def get_for_user(
+    async def require_membership(
         self, user: AuthUser, household_header: UUID | None = None
-    ) -> HouseholdView:
+    ) -> Membership:
         membership = await self.repo.get_membership(user.id)
         if membership is None:
             if household_header is not None:
@@ -100,6 +100,12 @@ class HouseholdService:
             raise NotFoundError("You are not in a household yet.", "no_household")
         if household_header is not None and household_header != membership.household_id:
             raise ForbiddenError("You are not a member of that household.", "not_a_member")
+        return membership
+
+    async def get_for_user(
+        self, user: AuthUser, household_header: UUID | None = None
+    ) -> HouseholdView:
+        membership = await self.require_membership(user, household_header)
 
         household = await self.repo.get_household(membership.household_id)
         if household is None:

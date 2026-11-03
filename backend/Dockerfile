@@ -10,7 +10,7 @@ WORKDIR /app
 COPY pyproject.toml ./
 COPY app ./app
 
-RUN pip install --upgrade pip && pip install .
+RUN pip install --upgrade pip && pip install ".[capture]"
 
 RUN useradd --create-home --uid 10001 appuser \
     && chown -R appuser:appuser /app

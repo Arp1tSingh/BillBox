@@ -33,7 +33,11 @@ const child = spawn(
   ['-m', 'uvicorn', 'app.main:app', '--host', host, '--port', port],
   {
     cwd: backendDir,
-    env: { ...process.env, ENVIRONMENT: process.env.ENVIRONMENT ?? 'test' },
+    env: {
+      ...process.env,
+      ENVIRONMENT: process.env.ENVIRONMENT ?? 'test',
+      GEMINI_MOCK: process.env.GEMINI_MOCK ?? '1',
+    },
     stdio: 'inherit',
   },
 )

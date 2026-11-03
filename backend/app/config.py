@@ -38,7 +38,13 @@ class Settings(BaseSettings):
 
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.8-flash"
+    gemini_thinking_level: str = "low"
     gemini_mock: bool = False
+
+    max_file_mb: int = Field(default=10, ge=1, le=50)
+    max_upload_mb: int = Field(default=25, ge=1, le=31)
+    max_pages: int = Field(default=10, ge=1, le=20)
+    processing_stale_seconds: int = Field(default=300, ge=30)
 
     @field_validator("supabase_url")
     @classmethod

@@ -29,7 +29,7 @@ jobs:
           cache-dependency-path: backend/pyproject.toml
 
       - name: Install dependencies
-        run: pip install -e '.[dev]'
+        run: pip install -e '.[dev,capture]'
 
       - name: Lint
         run: python -m ruff check .

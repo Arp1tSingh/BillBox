@@ -23,6 +23,7 @@ jobs:
     timeout-minutes: 35
     env:
       RUN_E2E: '1'
+      GEMINI_MOCK: '1'
       API_BASE_URL: http://127.0.0.1:8000
       APP_URL: http://127.0.0.1:5173
     steps:
@@ -70,7 +71,7 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Install backend dependencies
-        run: pip install -e 'backend[dev]'
+        run: pip install -e 'backend[dev,capture]'
 
       - name: Install frontend dependencies
         working-directory: frontend

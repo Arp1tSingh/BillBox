@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import os
 from collections.abc import AsyncIterator
+from datetime import date
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
@@ -11,10 +13,15 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from app.config import Settings
-from app.domain import AuthUser
+from app.domain import AuthUser, ExtractionResult
 from app.errors import AuthError
 from app.main import create_app
-from tests.fakes import FakeHouseholdsRepository
+from tests.fakes import (
+    FakeHouseholdsRepository,
+    FakeReceiptsRepository,
+    FakeStorage,
+    ScriptedExtractionProvider,
+)
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
@@ -68,15 +75,47 @@ def users(repo: FakeHouseholdsRepository) -> dict[str, AuthUser]:
     return result
 
 
+@pytest.fixture
+def receipts_repo() -> FakeReceiptsRepository:
+    return FakeReceiptsRepository()
+
+
+@pytest.fixture
+def storage() -> FakeStorage:
+    return FakeStorage()
+
+
+@pytest.fixture
+def extraction() -> ScriptedExtractionProvider:
+    return ScriptedExtractionProvider(
+        result=ExtractionResult(
+            bill_type="electricity",
+            merchant="Adani Electricity Pvt Ltd",
+            amount=Decimal("2480.50"),
+            currency="INR",
+            bill_date=date(2026, 1, 12),
+            language="en",
+            raw_text="Adani Electricity bill total 2480.50",
+            tags=["power", "monthly"],
+        )
+    )
+
+
 @pytest_asyncio.fixture
 async def client(
     settings: Settings,
     repo: FakeHouseholdsRepository,
+    receipts_repo: FakeReceiptsRepository,
+    storage: FakeStorage,
+    extraction: ScriptedExtractionProvider,
     users: dict[str, AuthUser],
 ) -> AsyncIterator[AsyncClient]:
     app = create_app(
         settings=settings,
         households_repo=repo,
+        receipts_repo=receipts_repo,
+        storage=storage,
+        extraction=extraction,
         jwt_verifier=StaticTokenVerifier(users),
     )
     transport = ASGITransport(app=app)
