@@ -246,7 +246,7 @@ test('E2E-4.11 add, filter, remove and re-add a custom tag', async ({ page, user
   await page.getByRole('button', { name: 'Add', exact: true }).click()
   await expect(page.getByText('Warranty')).toBeVisible()
 
-  await page.getByRole('link', { name: 'Home' }).filter({ visible: true }).click()
+  await ui.openHome(page)
   await page.getByRole('button', { name: /^Warranty/ }).click()
   await expect(page.getByTestId('receipt-card')).toHaveCount(1)
   await expect(page.getByTestId('receipt-list')).toContainText('Warranty mixer')
@@ -255,12 +255,12 @@ test('E2E-4.11 add, filter, remove and re-add a custom tag', async ({ page, user
   await page.getByRole('button', { name: 'Remove Warranty tag' }).click()
   await expect(page.getByText('Warranty')).toHaveCount(0)
 
-  await page.getByRole('link', { name: 'Home' }).filter({ visible: true }).click()
+  await ui.openHome(page)
   await expect(page.getByRole('button', { name: /^Warranty/ })).toHaveCount(0)
 
   await page.getByTestId('receipt-card').click()
   await page.getByLabel('New tag').fill('Warranty')
   await page.getByRole('button', { name: 'Add', exact: true }).click()
-  await page.getByRole('link', { name: 'Home' }).filter({ visible: true }).click()
+  await ui.openHome(page)
   await expect(page.getByRole('button', { name: /^Warranty/ })).toBeVisible()
 })

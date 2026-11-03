@@ -237,6 +237,49 @@ async def test_search_tag_chips_sort_and_pagination(
     assert explicit_dates["total"] == 2
 
 
+async def test_explicit_tag_combines_with_tag_in_query(
+    client: AsyncClient, receipts_repo: FakeReceiptsRepository
+) -> None:
+    household = await create_household(client)
+    household_id = UUID(household["id"])
+    both = seed_receipt(
+        receipts_repo,
+        household_id,
+        title="Power and kirana",
+        merchant="Adani Electricity",
+        amount="2500.00",
+        bill_date=date(2026, 2, 10),
+        raw_text="electricity bill grocery",
+        tag_slug="electricity",
+    )
+    groceries = seeded_tags(receipts_repo)["groceries"]
+    receipts_repo.receipt_tags[(both.id, groceries.id)] = {
+        "source": "rule",
+        "confidence": 1.0,
+        "removed_at": None,
+        "removed_by": None,
+    }
+    seed_receipt(
+        receipts_repo,
+        household_id,
+        title="Groceries only",
+        merchant="Kirana Store",
+        amount="900.00",
+        bill_date=date(2026, 2, 11),
+        raw_text="grocery bill",
+        tag_slug="groceries",
+    )
+
+    response = await client.get(
+        "/receipts",
+        params=[("q", "electricity"), ("tag", "groceries")],
+        headers=auth("owner"),
+    )
+    body = response.json()
+    assert response.status_code == 200, response.text
+    assert [item["title"] for item in body["items"]] == ["Power and kirana"]
+
+
 async def test_search_is_household_scoped(
     client: AsyncClient, receipts_repo: FakeReceiptsRepository
 ) -> None:

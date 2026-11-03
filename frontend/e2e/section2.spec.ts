@@ -36,7 +36,7 @@ async function addFiles(
 
 test('E2E-2.1 upload one image and read it', async ({ page, users }) => {
   await setUpHousehold(page, users)
-  await page.getByRole('link', { name: 'Scan' }).filter({ visible: true }).click()
+  await ui.openScan(page)
 
   await addFiles(page, [{ name: 'bill.png', mimeType: 'image/png', buffer: png('bill-en.png') }])
   await expect(page.getByText('1 page')).toBeVisible()
@@ -51,7 +51,7 @@ test('E2E-2.1 upload one image and read it', async ({ page, users }) => {
 
 test('E2E-2.2 remove and reorder pages before upload', async ({ page, users }) => {
   await setUpHousehold(page, users)
-  await page.getByRole('link', { name: 'Scan' }).filter({ visible: true }).click()
+  await ui.openScan(page)
 
   await addFiles(page, [
     { name: 'one.png', mimeType: 'image/png', buffer: png('bill-en.png') },
@@ -73,12 +73,13 @@ test('E2E-2.2 remove and reorder pages before upload', async ({ page, users }) =
 
 test('E2E-2.3 upload a PDF', async ({ page, users }) => {
   await setUpHousehold(page, users)
-  await page.getByRole('link', { name: 'Scan' }).filter({ visible: true }).click()
+  await ui.openScan(page)
 
   await addFiles(page, [
     { name: 'bill.pdf', mimeType: 'application/pdf', buffer: pdf() },
   ])
-  await expect(page.getByText(/PDF/)).toBeVisible()
+  await expect(page.getByText('bill.pdf')).toBeVisible()
+  await expect(page.getByText(/MB .* PDF/)).toBeVisible()
   await page.getByRole('button', { name: 'Save bill' }).click()
 
   await page.waitForURL((url) => url.pathname.startsWith('/receipts/'))
@@ -88,7 +89,7 @@ test('E2E-2.3 upload a PDF', async ({ page, users }) => {
 
 test('E2E-2.4 rejects a text file, 11 pages and an oversized page', async ({ page, users }) => {
   await setUpHousehold(page, users)
-  await page.getByRole('link', { name: 'Scan' }).filter({ visible: true }).click()
+  await ui.openScan(page)
 
   await addFiles(page, [
     {
@@ -114,7 +115,7 @@ test('E2E-2.4 rejects a text file, 11 pages and an oversized page', async ({ pag
 
 test('E2E-2.5 skip-AI upload and manual tag', async ({ page, users }) => {
   await setUpHousehold(page, users)
-  await page.getByRole('link', { name: 'Scan' }).filter({ visible: true }).click()
+  await ui.openScan(page)
 
   await addFiles(page, [{ name: 'bill.png', mimeType: 'image/png', buffer: png('bill-en.png') }])
   await page.getByLabel('Skip AI for this bill').check()
@@ -163,7 +164,7 @@ test('E2E-2.6 forced failure then Retry succeeds', async ({ page, request, users
 
 test('E2E-2.9 capture input is mobile-friendly', async ({ page, users }) => {
   await setUpHousehold(page, users)
-  await page.getByRole('link', { name: 'Scan' }).filter({ visible: true }).click()
+  await ui.openScan(page)
 
   const camera = page.getByLabel('Take a photo of a bill')
   await expect(camera).toHaveAttribute('accept', 'image/*,application/pdf')

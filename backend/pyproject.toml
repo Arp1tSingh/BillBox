@@ -15,6 +15,7 @@ dependencies = [
   "pydantic-settings>=2.7,<3",
   "pyjwt[crypto]>=2.10,<3",
   "supabase>=2.13,<3",
+  "tzdata>=2024.2",
   "uvicorn[standard]>=0.32,<1",
 ]
 

@@ -56,10 +56,11 @@ test('E2E-5.1 edit fields, reload and search', async ({ page, users }) => {
   await page.reload()
   await expect(page.getByLabel('Title')).toHaveValue('Edited power bill')
   await expect(page.getByLabel('Merchant')).toHaveValue('Edited Electric Co')
-  await expect(page.getByLabel('Amount')).toHaveValue('7777.50')
+  // `<input type="number">` normalises the trailing zero.
+  await expect(page.getByLabel('Amount')).toHaveValue('7777.5')
   await expect(page.getByLabel('Bill date')).toHaveValue('2026-03-04')
 
-  await page.getByRole('link', { name: 'Home' }).filter({ visible: true }).click()
+  await ui.openHome(page)
   await page.getByLabel('Search bills').fill('Edited Electric')
   await page.getByRole('button', { name: 'Search' }).click()
   await expect(page.getByTestId('receipt-card')).toHaveCount(1)
@@ -159,22 +160,28 @@ test('E2E-5.6 mobile has no horizontal scroll and usable nav', async ({ page, us
     () => document.documentElement.scrollWidth - window.innerWidth,
   )
   expect(overflow).toBeLessThanOrEqual(1)
-  await expect(
-    page.getByRole('navigation', { name: 'Primary' }).filter({ visible: true }),
-  ).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Scan' }).filter({ visible: true })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Primary' })).toBeVisible()
+  await expect(ui.navLink(page, 'Scan')).toBeVisible()
 })
 
-test('E2E-5.7 slow API shows the waking banner', async ({ page, users }) => {
-  await setUp(page, users.owner)
-  await page.route('**/receipts?**', async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, 2500))
-    await route.continue()
-  })
+test.describe('E2E-5.7 slow API', () => {
+  // Keep the service worker from serving the app shell while we measure the
+  // banner; it also makes request interception deterministic on WebKit.
+  test.use({ serviceWorkers: 'block' })
 
-  await page.reload()
-  await expect(page.getByRole('status')).toContainText('Waking up the server')
-  await expect(page.getByRole('status')).toHaveCount(0, { timeout: 15_000 })
+  test('slow API shows the waking banner', async ({ page, users }) => {
+    await setUp(page, users.owner)
+    await page.route(/\/receipts(\?|$)/, async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 3_000))
+      await route.continue()
+    })
+
+    // Wait only for the navigation commit: a full `load` wait can outlast the
+    // 1.5 s banner delay on WebKit and miss the transient status element.
+    await page.reload({ waitUntil: 'commit' })
+    await expect(page.getByRole('status')).toContainText('Waking up the server')
+    await expect(page.getByRole('status')).toHaveCount(0, { timeout: 15_000 })
+  })
 })
 
 test('E2E-5.8 full journey with two accounts', async ({ page, users }) => {
@@ -189,7 +196,7 @@ test('E2E-5.8 full journey with two accounts', async ({ page, users }) => {
   await ui.signIn(page, users.member)
   await ui.joinHousehold(page, code)
 
-  await page.getByRole('link', { name: 'Scan' }).filter({ visible: true }).click()
+  await ui.openScan(page)
   await page
     .getByLabel('Add bill pages or a PDF')
     .setInputFiles([{ name: 'bill.png', mimeType: 'image/png', buffer: bill() }])
@@ -201,7 +208,7 @@ test('E2E-5.8 full journey with two accounts', async ({ page, users }) => {
   await page.getByRole('button', { name: 'Add', exact: true }).click()
   await expect(page.getByText('Warranty')).toBeVisible()
 
-  await page.getByRole('link', { name: 'Home' }).filter({ visible: true }).click()
+  await ui.openHome(page)
   await page.getByLabel('Search bills').fill('Demo Store')
   await page.getByRole('button', { name: 'Search' }).click()
   await expect(page.getByTestId('receipt-card')).toHaveCount(1)

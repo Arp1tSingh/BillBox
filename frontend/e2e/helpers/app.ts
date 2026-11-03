@@ -33,13 +33,30 @@ export async function joinHousehold(page: Page, code: string): Promise<void> {
   await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible()
 }
 
+/**
+ * The desktop header and the mobile tab bar both render the primary nav, but
+ * only one is in the accessibility tree at a given viewport. Scope to the nav
+ * and match the label exactly so headings or CTA copy such as "Back to Home"
+ * and "Scan a bill" never collide with a nav link.
+ */
+export function navLink(page: Page, name: 'Home' | 'Scan' | 'Household') {
+  return page
+    .getByRole('navigation', { name: 'Primary' })
+    .getByRole('link', { name, exact: true })
+}
+
+export async function openHome(page: Page): Promise<void> {
+  await navLink(page, 'Home').click()
+  await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible()
+}
+
+export async function openScan(page: Page): Promise<void> {
+  await navLink(page, 'Scan').click()
+  await expect(page.getByRole('heading', { name: 'Scan' })).toBeVisible()
+}
+
 export async function openHousehold(page: Page): Promise<void> {
-  // Both the desktop header and the mobile tab bar render a household link;
-  // only one is visible at a given viewport.
-  await page
-    .getByRole('link', { name: 'Household' })
-    .filter({ visible: true })
-    .click()
+  await navLink(page, 'Household').click()
   await expect(page.getByRole('heading', { name: 'Household' })).toBeVisible()
 }
 

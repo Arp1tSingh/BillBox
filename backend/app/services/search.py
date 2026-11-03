@@ -226,7 +226,16 @@ class SearchService:
         tags = await self.repo.list_tags(membership.household_id)
         parsed = SearchParser(tags).parse(q)
 
-        tag_ids = resolve_tag_filters(tag, tags) if tag else parsed.tag_ids
+        if tag:
+            tag_ids = resolve_tag_filters(tag, tags)
+            # A query such as "electricity" also resolves to a tag. Keep that
+            # filter alongside the chip selection so text + chip remains an
+            # AND filter (for example, electricity text + Groceries chip).
+            for parsed_tag_id in parsed.tag_ids:
+                if parsed_tag_id not in tag_ids:
+                    tag_ids.append(parsed_tag_id)
+        else:
+            tag_ids = parsed.tag_ids
         start = date_from or parsed.date_from
         end = date_to or parsed.date_to
         low = min_amount if min_amount is not None else parsed.min_amount
