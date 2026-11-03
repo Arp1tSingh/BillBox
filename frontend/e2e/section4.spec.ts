@@ -253,7 +253,7 @@ test('E2E-4.11 add, filter, remove and re-add a custom tag', async ({ page, user
 
   await page.getByTestId('receipt-card').click()
   await page.getByRole('button', { name: 'Remove Warranty tag' }).click()
-  await expect(page.getByText('Warranty')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Remove Warranty tag' })).toHaveCount(0)
 
   await ui.openHome(page)
   await expect(page.getByRole('button', { name: /^Warranty/ })).toHaveCount(0)
