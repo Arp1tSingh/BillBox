@@ -536,11 +536,10 @@ Build:
 - [x] React/Vite/PWA shell, Tailwind, Supabase auth, sign-in/up, onboarding.
 - [ ] Deploy backend to Cloud Run and frontend to Cloudflare Pages early.
 
-> **Day 1 status:** scaffold, migrations, API and PWA are in place. The
-> migrations, RLS policies, storage read policy and member-cap trigger pass in
-> an embedded Postgres check. A live Supabase instance, E2E-1.1–1.7, R1–R6 and
-> both deployments are still pending; the checkpoint stays open until they
-> pass.
+> **Day 1 status:** scaffold, migrations, API and PWA are in place, and the
+> local-Supabase API/Playwright E2E suites run in CI. A hosted Supabase smoke,
+> the deployed E2E-1.7 and both deployments are still pending; the checkpoint
+> stays open until they pass.
 
 E2E checkpoint:
 
@@ -569,8 +568,8 @@ Build:
 - [ ] Deploy and smoke-test on a phone.
 
 > **Day 2 status:** build complete with unit/API tests and mock extraction.
-> Playwright, live Gemini and phone smoke tests still need a local Supabase
-> instance.
+> The Playwright section suite and API-level E2E run against a local Supabase
+> instance in CI; live Gemini and phone smoke tests remain.
 
 E2E checkpoint:
 
@@ -636,7 +635,8 @@ Build:
 
 > **Day 4 status:** search backend and UI are implemented, with parser/search
 > tests and a Playwright `section4.spec.ts`. The SQL RPC was smoke-tested on a
-> scratch Postgres 18 database; live Supabase and the E2E-4.x run are pending.
+> scratch Postgres 18 database; the Playwright E2E job runs against a local
+> Supabase in CI. A hosted/live Supabase smoke is pending.
 
 E2E checkpoint:
 
@@ -664,12 +664,13 @@ Build:
 - [x] Household: invite code copy/share/rotate, members, cap error.
 - [x] PWA polish: icons, install prompt, bottom nav, safe areas, waking state.
 - [x] Full automated journey with 2 accounts and mocked extraction.
-- [ ] Tag `v0.1`; write the release notes.
+- [x] Tag `v0.1`; write the release notes.
 
 > **Day 5 status:** detail/household/PWA flows are complete, including the
 > delayed-API "waking up" banner and install prompt. `section5.spec.ts` covers
-> E2E-5.1–5.3, 5.5–5.9; E2E-5.4 reuses the member-cap test. Release notes and
-> the `v0.1` tag wait for the live E2E/Gate 2 run.
+> E2E-5.1–5.3, 5.5–5.9; E2E-5.4 reuses the member-cap test. Release notes are
+> in `RELEASE_NOTES.md` and the `v0.1` tag is cut once the Playwright suite is
+> green; Gate 2 and the production deployments remain pending.
 
 E2E checkpoint:
 

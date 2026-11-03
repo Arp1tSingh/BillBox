@@ -19,7 +19,7 @@ Each build section ends with an E2E checkpoint and a shared regression suite; th
 
 **Later (polish weeks)**
 
-- Export (ZIP of files plus CSV of fields), offline-friendly capture, UI polish, expanded E2E coverage and a portfolio write-up
+- Export (ZIP of files plus CSV of fields), offline-friendly capture, UI polish, expanded E2E coverage and a portfolio write-up — shipped in v0.1
 
 **Out of scope for now**
 
