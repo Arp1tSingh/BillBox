@@ -1,7 +1,9 @@
-import { Home, LogOut, ReceiptText, ScanLine, Users } from 'lucide-react'
+import { Download, Home, LogOut, ReceiptText, ScanLine, Users } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../auth/AuthProvider'
+import { ApiWakingBanner } from './ApiWakingBanner'
 import { useHousehold } from '../hooks/useHousehold'
 
 const navItems = [
@@ -17,10 +19,31 @@ function navClass(active: boolean): string {
   ].join(' ')
 }
 
+interface InstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+
 export function Layout() {
   const { signOut } = useAuth()
   const { data: household } = useHousehold()
   const navigate = useNavigate()
+  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null)
+
+  useEffect(() => {
+    function handlePrompt(event: Event) {
+      event.preventDefault()
+      setInstallPrompt(event as InstallPromptEvent)
+    }
+    window.addEventListener('beforeinstallprompt', handlePrompt)
+    return () => window.removeEventListener('beforeinstallprompt', handlePrompt)
+  }, [])
+
+  async function install() {
+    if (!installPrompt) return
+    await installPrompt.prompt()
+    setInstallPrompt(null)
+  }
 
   async function handleSignOut() {
     await signOut()
@@ -52,6 +75,17 @@ export function Layout() {
             ))}
           </nav>
 
+          {installPrompt ? (
+            <button
+              type="button"
+              onClick={install}
+              className="hidden items-center gap-1.5 rounded-xl px-2.5 py-2 text-sm font-medium text-teal-800 transition hover:bg-teal-50 sm:flex"
+            >
+              <Download size={16} aria-hidden="true" />
+              Install
+            </button>
+          ) : null}
+
           <button
             type="button"
             onClick={handleSignOut}
@@ -62,6 +96,7 @@ export function Layout() {
             <span className="hidden sm:inline">Sign out</span>
           </button>
         </div>
+        <ApiWakingBanner />
       </header>
 
       <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-6 md:pb-12">

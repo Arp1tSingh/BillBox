@@ -9,7 +9,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      devOptions: { enabled: false },
+      devOptions: { enabled: process.env.E2E_SW === '1' },
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'BillBox',

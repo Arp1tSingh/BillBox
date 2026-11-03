@@ -1,3 +1,4 @@
+import { beginApiRequest, endApiRequest } from './apiActivity'
 import { config } from './config'
 import { requireSupabase } from './supabase'
 
@@ -47,6 +48,15 @@ async function toApiError(response: Response): Promise<ApiError> {
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  beginApiRequest()
+  try {
+    return await performRequest<T>(path, options)
+  } finally {
+    endApiRequest()
+  }
+}
+
+async function performRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const client = requireSupabase()
   const {
     data: { session },

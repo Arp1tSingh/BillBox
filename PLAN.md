@@ -660,11 +660,16 @@ E2E checkpoint:
 ### Section 5 — Day 5: Detail, household, PWA and Gate 2
 
 Build:
-- [ ] Detail: page viewer, inline edits, tag editor, delete.
-- [ ] Household: invite code copy/share/rotate, members, cap error.
-- [ ] PWA polish: icons, install prompt, bottom nav, safe areas, waking state.
-- [ ] Full automated journey with 2 accounts and mocked extraction.
+- [x] Detail: page viewer, inline edits, tag editor, delete.
+- [x] Household: invite code copy/share/rotate, members, cap error.
+- [x] PWA polish: icons, install prompt, bottom nav, safe areas, waking state.
+- [x] Full automated journey with 2 accounts and mocked extraction.
 - [ ] Tag `v0.1`; write the release notes.
+
+> **Day 5 status:** detail/household/PWA flows are complete, including the
+> delayed-API "waking up" banner and install prompt. `section5.spec.ts` covers
+> E2E-5.1–5.3, 5.5–5.9; E2E-5.4 reuses the member-cap test. Release notes and
+> the `v0.1` tag wait for the live E2E/Gate 2 run.
 
 E2E checkpoint:
 

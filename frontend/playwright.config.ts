@@ -64,6 +64,7 @@ export default defineConfig({
         VITE_SUPABASE_URL: env.supabaseUrl,
         VITE_SUPABASE_ANON_KEY: env.anonKey,
         VITE_API_BASE_URL: env.apiBaseUrl,
+        E2E_SW: '1',
       },
     },
   ],
