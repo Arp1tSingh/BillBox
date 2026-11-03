@@ -26,6 +26,7 @@ export class ApiError extends Error {
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'
   body?: unknown
+  formData?: FormData
   headers?: Record<string, string>
   householdId?: string
 }
@@ -63,7 +64,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
         Authorization: `Bearer ${accessToken}`,
         ...(options.householdId ? { 'X-Household-Id': options.householdId } : {}),
       },
-      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      body: options.formData ?? (options.body !== undefined ? JSON.stringify(options.body) : undefined),
     })
 
   let response = await send(session.access_token)
@@ -92,4 +93,6 @@ export const api = {
     request<T>(path, { method: 'PATCH', body, householdId }),
   delete: <T>(path: string, householdId?: string) =>
     request<T>(path, { method: 'DELETE', householdId }),
+  upload: <T>(path: string, formData: FormData, householdId?: string) =>
+    request<T>(path, { method: 'POST', formData, householdId }),
 }

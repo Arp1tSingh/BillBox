@@ -11,6 +11,7 @@ import { HomePage } from './pages/HomePage'
 import { HouseholdPage } from './pages/HouseholdPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { OnboardingPage } from './pages/OnboardingPage'
+import { ReceiptDetailPage } from './pages/ReceiptDetailPage'
 import { ScanPage } from './pages/ScanPage'
 import { SignInPage } from './pages/SignInPage'
 
@@ -49,6 +50,7 @@ export default function App() {
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />
             <Route path="scan" element={<ScanPage />} />
+            <Route path="receipts/:id" element={<ReceiptDetailPage />} />
             <Route path="household" element={<HouseholdPage />} />
           </Route>
         </Route>
