@@ -69,7 +69,8 @@ async def test_upload_process_and_delete(
     assert any(tag["source"] == "rule" for tag in body["tags"])
 
     listed = await receipt_client.get("/receipts", headers=token_auth(owner))
-    assert [row["id"] for row in listed.json()] == [receipt_id]
+    assert listed.status_code == 200, listed.text
+    assert [row["id"] for row in listed.json()["items"]] == [receipt_id]
 
     deleted = await receipt_client.delete(f"/receipts/{receipt_id}", headers=token_auth(owner))
     assert deleted.status_code == 204
