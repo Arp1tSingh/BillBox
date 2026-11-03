@@ -10,6 +10,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 
 import { ErrorAlert } from '../components/ErrorAlert'
@@ -25,6 +26,7 @@ import type { ReceiptUploadResponse } from '../lib/types'
 
 export function ScanPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
   const [pages, setPages] = useState<PreparedPage[]>([])
@@ -111,6 +113,8 @@ export function ScanPage() {
       }
     }
 
+    void queryClient.invalidateQueries({ queryKey: ['receipts'] })
+    void queryClient.invalidateQueries({ queryKey: ['tags'] })
     releasePages(pages)
     navigate(`/receipts/${created.id}`, { replace: true })
   }

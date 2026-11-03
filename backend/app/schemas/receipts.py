@@ -73,3 +73,10 @@ class ReceiptListQuery(BaseModel):
 class ReceiptTagCreate(BaseModel):
     tag_id: UUID | None = None
     label: str | None = Field(default=None, max_length=80)
+
+
+class ReceiptSearchResponse(BaseModel):
+    items: list[ReceiptSummaryView]
+    total: int
+    page: int
+    page_size: int

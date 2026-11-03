@@ -10,6 +10,8 @@ from fastapi import Header, Request
 from app.errors import ConfigError
 from app.services.households import HouseholdService
 from app.services.receipts import ReceiptService
+from app.services.search import SearchService
+from app.services.tags import TagService
 
 
 def get_household_service(request: Request) -> HouseholdService:
@@ -29,4 +31,18 @@ def get_receipt_service(request: Request) -> ReceiptService:
     service = getattr(request.app.state, "receipt_service", None)
     if service is None:
         raise ConfigError("The receipt service is not configured.")
+    return service
+
+
+def get_tag_service(request: Request) -> TagService:
+    service = getattr(request.app.state, "tag_service", None)
+    if service is None:
+        raise ConfigError("The tag service is not configured.")
+    return service
+
+
+def get_search_service(request: Request) -> SearchService:
+    service = getattr(request.app.state, "search_service", None)
+    if service is None:
+        raise ConfigError("The search service is not configured.")
     return service

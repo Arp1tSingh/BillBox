@@ -18,12 +18,15 @@ from app.repositories.supabase_households import SupabaseHouseholdsRepository
 from app.repositories.supabase_receipts import SupabaseReceiptsRepository
 from app.routers.households import router as households_router
 from app.routers.receipts import router as receipts_router
+from app.routers.tags import router as tags_router
 from app.routers.testing import router as testing_router
 from app.schemas.households import HealthView
 from app.services.extraction import ExtractionProvider, build_extraction_provider
 from app.services.households import HouseholdService
 from app.services.receipts import ReceiptService
+from app.services.search import SearchService
 from app.services.storage import StorageService, SupabaseStorageService
+from app.services.tags import TagService
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +73,8 @@ def create_app(
         extraction,
         settings,
     )
+    app.state.tag_service = TagService(receipts, household_service)
+    app.state.search_service = SearchService(receipts, household_service, storage)
     app.state.jwt_verifier = jwt_verifier or SupabaseJWTVerifier(settings)
 
     app.add_middleware(
@@ -127,6 +132,7 @@ def create_app(
 
     app.include_router(households_router)
     app.include_router(receipts_router)
+    app.include_router(tags_router)
     if settings.environment == "test":
         app.include_router(testing_router)
     return app

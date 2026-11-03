@@ -328,14 +328,16 @@ async def test_list_is_newest_first_and_household_scoped(client: AsyncClient) ->
     second = await create_receipt(client)
 
     listed = await client.get("/receipts", headers=auth("owner"))
-    assert listed.status_code == 200
-    ids = [row["id"] for row in listed.json()]
+    assert listed.status_code == 200, listed.text
+    body = listed.json()
+    ids = [row["id"] for row in body["items"]]
     assert ids == [second["id"], first["id"]]
-    assert listed.json()[0]["thumbnail_url"]
+    assert body["total"] == 2
+    assert body["items"][0]["thumbnail_url"]
 
     await join_household(client, household["invite_code"], "member")
     member_list = await client.get("/receipts", headers=auth("member"))
-    assert {row["id"] for row in member_list.json()} == set(ids)
+    assert {row["id"] for row in member_list.json()["items"]} == set(ids)
 
 
 async def test_add_second_bill_type_replaces_first(client: AsyncClient) -> None:
@@ -347,9 +349,7 @@ async def test_add_second_bill_type_replaces_first(client: AsyncClient) -> None:
     ).json()
     electricity = next(tag for tag in detail["tags"] if tag["slug"] == "electricity")
 
-    tags = (await client.get("/receipts", headers=auth("owner"))).json()
-    assert tags
-    # Add a household custom tag, then a system bill type: bill type stays unique.
+    # Adding a system bill type again keeps exactly one bill-type tag.
     response = await client.post(
         f"/receipts/{created['id']}/tags",
         json={"tag_id": electricity["tag_id"]},
@@ -358,3 +358,18 @@ async def test_add_second_bill_type_replaces_first(client: AsyncClient) -> None:
     bill_types = [tag for tag in response.json()["tags"] if tag["kind"] == "bill_type"]
     assert len(bill_types) == 1
     assert bill_types[0]["source"] == "user"
+
+
+async def test_tags_endpoint_returns_counts(client: AsyncClient) -> None:
+    await create_household(client)
+    created = await create_receipt(client)
+    await client.post(f"/receipts/{created['id']}/process", headers=auth("owner"))
+
+    response = await client.get("/tags", headers=auth("owner"))
+    assert response.status_code == 200, response.text
+    tags = response.json()
+    electricity = next(tag for tag in tags if tag["slug"] == "electricity")
+    assert electricity["label_en"] == "Electricity"
+    assert electricity["count"] == 1
+    assert electricity["keywords"]
+    assert any(tag["slug"] == "water" and tag["count"] == 0 for tag in tags)

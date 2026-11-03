@@ -370,6 +370,18 @@ class FakeReceiptsRepository:
             self.receipt_tags[key]["removed_at"] = datetime.now(UTC)
             self.receipt_tags[key]["removed_by"] = user_id
 
+    async def tag_counts(self, household_id: UUID) -> dict[UUID, int]:
+        counts: dict[UUID, int] = {}
+        household_receipts = {
+            receipt_id
+            for receipt_id, receipt in self.receipts.items()
+            if receipt.household_id == household_id
+        }
+        for (receipt_id, tag_id), value in self.receipt_tags.items():
+            if receipt_id in household_receipts and value.get("removed_at") is None:
+                counts[tag_id] = counts.get(tag_id, 0) + 1
+        return counts
+
     async def find_similar_merchant_tag(
         self, household_id: UUID, merchant: str, *, threshold: float = 0.6
     ) -> Tag | None:
@@ -384,6 +396,82 @@ class FakeReceiptsRepository:
         return best[1] if best else None
 
 
+    async def search_receipts(
+        self,
+        household_id: UUID,
+        *,
+        query: str | None = None,
+        tag_ids: list[UUID] | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        min_amount: Decimal | None = None,
+        max_amount: Decimal | None = None,
+        sort: str = "date",
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[Receipt], int]:
+        tags_by_receipt: dict[UUID, set[UUID]] = {}
+        for (receipt_id, tag_id), value in self.receipt_tags.items():
+            if value.get("removed_at") is None:
+                tags_by_receipt.setdefault(receipt_id, set()).add(tag_id)
+
+        async def searchable(receipt: Receipt) -> str:
+            parts = [receipt.title, receipt.merchant, receipt.raw_text, receipt.bill_type]
+            for tag_id in tags_by_receipt.get(receipt.id, set()):
+                tag = self.tags.get(tag_id)
+                if tag:
+                    parts.extend([tag.label_en, tag.label_hi, tag.label_mr])
+            return " ".join(part for part in parts if part).casefold()
+
+        selected = set(tag_ids or [])
+        terms = [term for term in (query or "").casefold().split() if term]
+        matches: list[tuple[int, Receipt]] = []
+        for receipt in self.receipts.values():
+            if receipt.household_id != household_id:
+                continue
+            if date_from is not None and (
+                receipt.bill_date is None or receipt.bill_date < date_from
+            ):
+                continue
+            if date_to is not None and (receipt.bill_date is None or receipt.bill_date > date_to):
+                continue
+            if min_amount is not None and (receipt.amount is None or receipt.amount < min_amount):
+                continue
+            if max_amount is not None and (receipt.amount is None or receipt.amount > max_amount):
+                continue
+            present = tags_by_receipt.get(receipt.id, set())
+            tag_hits = len(present & selected)
+            if selected and tag_hits != len(selected):
+                continue
+            text = await searchable(receipt)
+            fts_hit = bool(terms) and all(term in text for term in terms)
+            merchant_hit = bool(
+                query
+                and receipt.merchant
+                and difflib.SequenceMatcher(
+                    None, query.casefold(), receipt.merchant.casefold()
+                ).ratio()
+                > 0.5
+            )
+            if terms and not (fts_hit or merchant_hit or tag_hits):
+                continue
+            relevance = 3 if tag_hits else 2 if merchant_hit else 1 if fts_hit else 0
+            matches.append((relevance, receipt))
+
+        def sort_key(item: tuple[int, Receipt]) -> tuple:
+            relevance, receipt = item
+            date_key = receipt.bill_date.toordinal() if receipt.bill_date else -1
+            amount_key = float(receipt.amount) if receipt.amount is not None else -1.0
+            if sort == "amount":
+                return (-amount_key, -date_key, -receipt.created_at.timestamp())
+            if sort == "relevance":
+                return (-relevance, -date_key, -receipt.created_at.timestamp())
+            return (-date_key, -receipt.created_at.timestamp())
+
+        matches.sort(key=sort_key)
+        total = len(matches)
+        page = [receipt for _, receipt in matches[offset : offset + limit]]
+        return page, total
 class FakeStorage:
     def __init__(self) -> None:
         self.objects: dict[str, tuple[bytes, str]] = {}
@@ -419,3 +507,4 @@ class ScriptedExtractionProvider:
             raise self.error
         assert self.result is not None
         return self.result
+

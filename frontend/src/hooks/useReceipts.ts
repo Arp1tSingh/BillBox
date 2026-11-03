@@ -4,22 +4,63 @@ import { useAuth } from '../auth/AuthProvider'
 import { api, ApiError } from '../lib/api'
 import type {
   ReceiptDetail,
-  ReceiptSummary,
+  ReceiptSearchResponse,
   ReceiptUpdateInput,
+  TagView,
 } from '../lib/types'
 
 export const receiptsKey = (userId: string | undefined) =>
   ['receipts', userId ?? 'anon'] as const
 export const receiptKey = (id: string) => ['receipt', id] as const
+export const tagsKey = (userId: string | undefined) =>
+  ['tags', userId ?? 'anon'] as const
 
-export function useReceipts() {
+export interface ReceiptSearchParams {
+  q?: string
+  tag?: string[]
+  from?: string
+  to?: string
+  min?: string
+  max?: string
+  sort?: string
+  page?: number
+  page_size?: number
+}
+
+function buildQuery(params: ReceiptSearchParams): string {
+  const query = new URLSearchParams()
+  if (params.q) query.set('q', params.q)
+  for (const tag of params.tag ?? []) query.append('tag', tag)
+  for (const key of ['from', 'to', 'min', 'max', 'sort'] as const) {
+    const value = params[key]
+    if (value) query.set(key, value)
+  }
+  if (params.page) query.set('page', String(params.page))
+  if (params.page_size) query.set('page_size', String(params.page_size))
+  return query.toString()
+}
+
+export function useReceipts(params: ReceiptSearchParams = {}) {
   const { user } = useAuth()
-  return useQuery<ReceiptSummary[], ApiError>({
-    queryKey: receiptsKey(user?.id),
-    queryFn: () => api.get<ReceiptSummary[]>('/receipts?limit=20'),
+  return useQuery<ReceiptSearchResponse, ApiError>({
+    queryKey: [...receiptsKey(user?.id), params],
+    queryFn: () => {
+      const query = buildQuery(params)
+      return api.get<ReceiptSearchResponse>(`/receipts${query ? `?${query}` : ''}`)
+    },
     enabled: Boolean(user),
     staleTime: 10_000,
     retry: (failureCount, error) => error.status >= 500 && failureCount < 1,
+  })
+}
+
+export function useTags() {
+  const { user } = useAuth()
+  return useQuery<TagView[], ApiError>({
+    queryKey: tagsKey(user?.id),
+    queryFn: () => api.get<TagView[]>('/tags'),
+    enabled: Boolean(user),
+    staleTime: 30_000,
   })
 }
 
@@ -42,6 +83,7 @@ export function useProcessReceipt(id: string) {
     onSuccess: (detail) => {
       queryClient.setQueryData(receiptKey(id), detail)
       void queryClient.invalidateQueries({ queryKey: ['receipts'] })
+      void queryClient.invalidateQueries({ queryKey: ['tags'] })
     },
   })
 }
@@ -53,6 +95,7 @@ export function useUpdateReceipt(id: string) {
     onSuccess: (detail) => {
       queryClient.setQueryData(receiptKey(id), detail)
       void queryClient.invalidateQueries({ queryKey: ['receipts'] })
+      void queryClient.invalidateQueries({ queryKey: ['tags'] })
     },
   })
 }
@@ -64,6 +107,7 @@ export function useDeleteReceipt(id: string) {
     onSuccess: () => {
       queryClient.removeQueries({ queryKey: receiptKey(id) })
       void queryClient.invalidateQueries({ queryKey: ['receipts'] })
+      void queryClient.invalidateQueries({ queryKey: ['tags'] })
     },
   })
 }
@@ -75,6 +119,7 @@ export function useAddReceiptTag(id: string) {
     onSuccess: (detail) => {
       queryClient.setQueryData(receiptKey(id), detail)
       void queryClient.invalidateQueries({ queryKey: ['receipts'] })
+      void queryClient.invalidateQueries({ queryKey: ['tags'] })
     },
   })
 }
@@ -87,6 +132,7 @@ export function useRemoveReceiptTag(id: string) {
     onSuccess: (detail) => {
       queryClient.setQueryData(receiptKey(id), detail)
       void queryClient.invalidateQueries({ queryKey: ['receipts'] })
+      void queryClient.invalidateQueries({ queryKey: ['tags'] })
     },
   })
 }

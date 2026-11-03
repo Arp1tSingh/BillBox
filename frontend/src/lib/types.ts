@@ -72,3 +72,21 @@ export interface ReceiptUpdateInput {
   amount?: string | null
   bill_date?: string | null
 }
+
+export interface ReceiptSearchResponse {
+  items: ReceiptSummary[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface TagView {
+  id: string
+  slug: string
+  label_en: string
+  label_hi: string | null
+  label_mr: string | null
+  kind: 'bill_type' | 'merchant' | 'custom'
+  keywords: string[]
+  count: number
+}

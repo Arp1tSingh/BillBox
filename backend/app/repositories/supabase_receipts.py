@@ -381,6 +381,77 @@ class SupabaseReceiptsRepository(ReceiptsRepository):
             .execute()
         )
 
+    async def search_receipts(
+        self,
+        household_id: UUID,
+        *,
+        query: str | None = None,
+        tag_ids: list[UUID] | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        min_amount: Decimal | None = None,
+        max_amount: Decimal | None = None,
+        sort: str = "date",
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[Receipt], int]:
+        client = await self._db()
+        params = {
+            "p_household": str(household_id),
+            "p_query": query or None,
+            "p_tag_ids": [str(tag_id) for tag_id in tag_ids] if tag_ids else None,
+            "p_from": date_from.isoformat() if date_from else None,
+            "p_to": date_to.isoformat() if date_to else None,
+            "p_min": str(min_amount) if min_amount is not None else None,
+            "p_max": str(max_amount) if max_amount is not None else None,
+            "p_sort": sort,
+            "p_limit": limit,
+            "p_offset": offset,
+        }
+        response = await client.rpc("search_receipts", params).execute()
+        rows = response.data or []
+        total = int(rows[0]["total"]) if rows else 0
+        receipts = [self._search_row(row) for row in rows]
+        return receipts, total
+
+    def _search_row(self, row: dict[str, Any]) -> Receipt:
+        return Receipt(
+            id=UUID(row["id"]),
+            household_id=UUID(row["household_id"]),
+            created_by=None,
+            title=row.get("title"),
+            merchant=row.get("merchant"),
+            amount=_decimal(row.get("amount")),
+            currency=row.get("currency") or "INR",
+            bill_date=_date(row.get("bill_date")),
+            bill_type=row.get("bill_type"),
+            language=None,
+            status=row.get("status", "ready"),
+            raw_text=None,
+            extracted=None,
+            ai_skipped=bool(row.get("ai_skipped")),
+            failure_reason=row.get("failure_reason"),
+            processing_started_at=None,
+            processed_at=None,
+            created_at=_datetime(row.get("created_at")) or datetime.now(UTC),
+            updated_at=_datetime(row.get("created_at")) or datetime.now(UTC),
+        )
+
+    async def tag_counts(self, household_id: UUID) -> dict[UUID, int]:
+        client = await self._db()
+        response = (
+            await client.table("receipt_tags")
+            .select("tag_id,receipts!inner(household_id)")
+            .eq("receipts.household_id", str(household_id))
+            .is_("removed_at", "null")
+            .execute()
+        )
+        counts: dict[UUID, int] = {}
+        for row in response.data or []:
+            tag_id = UUID(row["tag_id"])
+            counts[tag_id] = counts.get(tag_id, 0) + 1
+        return counts
+
     async def find_similar_merchant_tag(
         self, household_id: UUID, merchant: str, *, threshold: float = 0.6
     ) -> Tag | None:

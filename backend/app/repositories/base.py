@@ -7,6 +7,8 @@ database.
 
 from __future__ import annotations
 
+from datetime import date
+from decimal import Decimal
 from typing import Protocol
 from uuid import UUID
 
@@ -133,3 +135,24 @@ class ReceiptsRepository(Protocol):
     async def find_similar_merchant_tag(
         self, household_id: UUID, merchant: str, *, threshold: float = 0.6
     ) -> Tag | None: ...
+
+    async def tag_counts(self, household_id: UUID) -> dict[UUID, int]:
+        """Active receipt counts per tag for one household."""
+        ...
+
+    async def search_receipts(
+        self,
+        household_id: UUID,
+        *,
+        query: str | None = None,
+        tag_ids: list[UUID] | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        min_amount: Decimal | None = None,
+        max_amount: Decimal | None = None,
+        sort: str = "date",
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[Receipt], int]:
+        """Return matching receipts and the total count before pagination."""
+        ...

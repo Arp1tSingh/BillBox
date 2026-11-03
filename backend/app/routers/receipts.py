@@ -2,27 +2,31 @@
 
 from __future__ import annotations
 
+from datetime import date
+from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 
 from app.auth import get_current_user
-from app.deps import get_household_header, get_receipt_service
+from app.deps import get_household_header, get_receipt_service, get_search_service
 from app.domain import AuthUser
 from app.schemas.receipts import (
     ReceiptDetailView,
-    ReceiptSummaryView,
+    ReceiptSearchResponse,
     ReceiptTagCreate,
     ReceiptUpdate,
     ReceiptUploadView,
 )
 from app.services.receipts import ReceiptService
+from app.services.search import SearchService
 
 router = APIRouter(prefix="/receipts", tags=["receipts"])
 
 UserDep = Annotated[AuthUser, Depends(get_current_user)]
 ServiceDep = Annotated[ReceiptService, Depends(get_receipt_service)]
+SearchDep = Annotated[SearchService, Depends(get_search_service)]
 HouseholdHeader = Annotated[UUID | None, Depends(get_household_header)]
 
 
@@ -49,14 +53,35 @@ async def process_receipt(
     return await service.process(user, receipt_id, household_header=household_header)
 
 
-@router.get("", response_model=list[ReceiptSummaryView])
+@router.get("", response_model=ReceiptSearchResponse)
 async def list_receipts(
     user: UserDep,
-    service: ServiceDep,
+    service: SearchDep,
     household_header: HouseholdHeader,
-    limit: Annotated[int, Query(ge=1, le=50)] = 20,
-) -> list[ReceiptSummaryView]:
-    return await service.list(user, limit=limit, household_header=household_header)
+    q: Annotated[str | None, Query(max_length=200)] = None,
+    tag: Annotated[list[str] | None, Query()] = None,
+    date_from: Annotated[date | None, Query(alias="from")] = None,
+    date_to: Annotated[date | None, Query(alias="to")] = None,
+    min_amount: Annotated[Decimal | None, Query(alias="min", ge=0)] = None,
+    max_amount: Annotated[Decimal | None, Query(alias="max", ge=0)] = None,
+    sort: Annotated[str, Query()] = "date",
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=50)] = 20,
+    limit: Annotated[int | None, Query(ge=1, le=50)] = None,
+) -> ReceiptSearchResponse:
+    return await service.search(
+        user,
+        q=q,
+        tag=tag or [],
+        date_from=date_from,
+        date_to=date_to,
+        min_amount=min_amount,
+        max_amount=max_amount,
+        sort=sort,
+        page=page,
+        page_size=limit or page_size,
+        household_header=household_header,
+    )
 
 
 @router.get("/{receipt_id}", response_model=ReceiptDetailView)
