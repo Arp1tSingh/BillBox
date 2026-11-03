@@ -1,0 +1,25 @@
+name: Render keep-warm
+
+on:
+  schedule:
+    # Every 12 minutes. Render Free spins instances down after inactivity;
+    # this meets the get-active threshold without aggressive traffic.
+    - cron: '*/12 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    name: Ping BillBox API
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    env:
+      RENDER_HEALTH_URL: https://billbox-3pet.onrender.com/health
+    steps:
+      - name: Call the health endpoint
+        run: |
+          curl --fail --silent --show-error \
+            --max-time 30 --retry 2 --retry-delay 5 \
+            "$RENDER_HEALTH_URL"
