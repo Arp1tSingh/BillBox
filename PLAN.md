@@ -696,10 +696,15 @@ E2E checkpoint:
 ### Section 6 — Week 2+: Polish
 
 Build:
-- [ ] Export ZIP + CSV; tests and CI hardening; accessibility.
+- [x] Export ZIP + CSV; tests and CI hardening; accessibility.
 - [ ] Offline-friendly capture (IndexedDB queue); README, demo GIF, write-up.
 - [ ] Optional later: question answering, semantic search (pgvector), email
       intake, private vaults.
+
+> **Section 6 status:** household export is implemented (`GET
+> /households/export`) with a ZIP of `receipts.csv` plus original pages, backend
+> tests and an export Playwright test. The PWA shell works offline via Workbox;
+> an upload queue, demo media and the final write-up remain.
 
 E2E checkpoint:
 

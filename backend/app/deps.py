@@ -8,6 +8,7 @@ from uuid import UUID
 from fastapi import Header, Request
 
 from app.errors import ConfigError
+from app.services.export import ExportService
 from app.services.households import HouseholdService
 from app.services.receipts import ReceiptService
 from app.services.search import SearchService
@@ -45,4 +46,11 @@ def get_search_service(request: Request) -> SearchService:
     service = getattr(request.app.state, "search_service", None)
     if service is None:
         raise ConfigError("The search service is not configured.")
+    return service
+
+
+def get_export_service(request: Request) -> ExportService:
+    service = getattr(request.app.state, "export_service", None)
+    if service is None:
+        raise ConfigError("The export service is not configured.")
     return service

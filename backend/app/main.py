@@ -16,11 +16,13 @@ from app.errors import AppError
 from app.repositories.base import HouseholdsRepository, ReceiptsRepository
 from app.repositories.supabase_households import SupabaseHouseholdsRepository
 from app.repositories.supabase_receipts import SupabaseReceiptsRepository
+from app.routers.export import router as export_router
 from app.routers.households import router as households_router
 from app.routers.receipts import router as receipts_router
 from app.routers.tags import router as tags_router
 from app.routers.testing import router as testing_router
 from app.schemas.households import HealthView
+from app.services.export import ExportService
 from app.services.extraction import ExtractionProvider, build_extraction_provider
 from app.services.households import HouseholdService
 from app.services.receipts import ReceiptService
@@ -75,6 +77,7 @@ def create_app(
     )
     app.state.tag_service = TagService(receipts, household_service)
     app.state.search_service = SearchService(receipts, household_service, storage)
+    app.state.export_service = ExportService(receipts, household_service, storage)
     app.state.jwt_verifier = jwt_verifier or SupabaseJWTVerifier(settings)
 
     app.add_middleware(
@@ -83,6 +86,7 @@ def create_app(
         allow_credentials=True,
         allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["Authorization", "Content-Type", "X-Household-Id"],
+        expose_headers=["Content-Disposition"],
         max_age=600,
     )
 
@@ -133,6 +137,7 @@ def create_app(
     app.include_router(households_router)
     app.include_router(receipts_router)
     app.include_router(tags_router)
+    app.include_router(export_router)
     if settings.environment == "test":
         app.include_router(testing_router)
     return app

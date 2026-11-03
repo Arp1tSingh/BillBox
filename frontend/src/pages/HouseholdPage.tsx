@@ -1,14 +1,17 @@
-import { Check, Copy, RefreshCw, Share2, Users } from 'lucide-react'
+import { Check, Copy, Download, RefreshCw, Share2, Users } from 'lucide-react'
 import { useState } from 'react'
 
 import { ErrorAlert } from '../components/ErrorAlert'
 import { FullPageSpinner } from '../components/FullPageSpinner'
 import { useHousehold, useRotateInvite } from '../hooks/useHousehold'
+import { api } from '../lib/api'
 
 export function HouseholdPage() {
   const { data: household, isLoading } = useHousehold()
   const rotate = useRotateInvite()
   const [copied, setCopied] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
 
   if (isLoading || !household) return <FullPageSpinner label="Loading your household" />
 
@@ -22,6 +25,26 @@ export function HouseholdPage() {
       window.setTimeout(() => setCopied(false), 1800)
     } catch {
       setCopied(false)
+    }
+  }
+
+  async function exportData() {
+    setExporting(true)
+    setExportError(null)
+    try {
+      const { blob, filename } = await api.download('/households/export')
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = filename
+      document.body.append(anchor)
+      anchor.click()
+      anchor.remove()
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : 'Could not export your bills.')
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -132,6 +155,29 @@ export function HouseholdPage() {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Download size={18} className="text-teal-700" aria-hidden="true" />
+          <h2 className="text-base font-semibold text-slate-900">Export your bills</h2>
+        </div>
+        <p className="mt-1 text-sm leading-6 text-slate-600">
+          Download a ZIP with a CSV index and every original page. Only this household&apos;s
+          receipts are included.
+        </p>
+        <button
+          type="button"
+          onClick={exportData}
+          disabled={exporting}
+          className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:opacity-60"
+        >
+          <Download size={15} aria-hidden="true" />
+          {exporting ? 'Building export…' : 'Export ZIP'}
+        </button>
+        <div className="mt-3">
+          <ErrorAlert message={exportError} />
+        </div>
       </section>
     </div>
   )

@@ -30,6 +30,12 @@ interface RequestOptions {
   formData?: FormData
   headers?: Record<string, string>
   householdId?: string
+  blob?: boolean
+}
+
+export interface DownloadedFile {
+  blob: Blob
+  filename: string
 }
 
 async function toApiError(response: Response): Promise<ApiError> {
@@ -91,6 +97,14 @@ async function performRequest<T>(path: string, options: RequestOptions = {}): Pr
   if (response.status === 204) {
     return undefined as T
   }
+  if (options.blob) {
+    const disposition = response.headers.get('Content-Disposition') ?? ''
+    const match = /filename="?([^";]+)"?/i.exec(disposition)
+    return {
+      blob: await response.blob(),
+      filename: match?.[1] ?? 'billbox-export.zip',
+    } as T
+  }
   return (await response.json()) as T
 }
 
@@ -105,4 +119,6 @@ export const api = {
     request<T>(path, { method: 'DELETE', householdId }),
   upload: <T>(path: string, formData: FormData, householdId?: string) =>
     request<T>(path, { method: 'POST', formData, householdId }),
+  download: (path: string, householdId?: string) =>
+    request<DownloadedFile>(path, { method: 'GET', householdId, blob: true }),
 }

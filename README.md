@@ -7,10 +7,10 @@ the build order and E2E checkpoints live in [`PLAN.md`](PLAN.md).
 
 **Status:** Sections 1–5 are implemented — auth/households, capture and
 mockable extraction, rule/AI tagging, natural-language search with tag, amount,
-date, sort and pagination filters, plus the detail, household, PWA and
-waking-state flows. Backend unit/parser/search tests pass and the frontend
-builds. Live Supabase, Playwright, Gate 1 (30 real bills), Gate 2 and the
-Cloud Run/Cloudflare deployments are still pending.
+date, sort and pagination filters, detail, household, PWA and waking-state
+flows, plus ZIP/CSV export. Backend unit/parser/search/export tests pass and the
+frontend builds. Live Supabase, Playwright, Gate 1 (30 real bills), Gate 2 and
+the Cloud Run/Cloudflare deployments are still pending.
 
 ## Stack
 
