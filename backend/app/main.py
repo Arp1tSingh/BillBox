@@ -18,6 +18,7 @@ from app.repositories.supabase_households import SupabaseHouseholdsRepository
 from app.repositories.supabase_receipts import SupabaseReceiptsRepository
 from app.routers.households import router as households_router
 from app.routers.receipts import router as receipts_router
+from app.routers.testing import router as testing_router
 from app.schemas.households import HealthView
 from app.services.extraction import ExtractionProvider, build_extraction_provider
 from app.services.households import HouseholdService
@@ -126,6 +127,8 @@ def create_app(
 
     app.include_router(households_router)
     app.include_router(receipts_router)
+    if settings.environment == "test":
+        app.include_router(testing_router)
     return app
 
 
