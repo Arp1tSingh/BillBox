@@ -5,12 +5,19 @@ fields, and find it later by merchant, tag, amount or date. The product and
 architecture decisions live in [`BillBox-Blueprint.md`](BillBox-Blueprint.md);
 the build order and E2E checkpoints live in [`PLAN.md`](PLAN.md).
 
-**Status:** Sections 1–5 are implemented — auth/households, capture and
+**Status:** Sections 1–6 are implemented — auth/households, capture and
 mockable extraction, rule/AI tagging, natural-language search with tag, amount,
 date, sort and pagination filters, detail, household, PWA and waking-state
-flows, plus ZIP/CSV export. Backend unit/parser/search/export tests pass and the
-frontend builds. Live Supabase, Playwright, Gate 1 (30 real bills), Gate 2 and
-the Cloud Run/Cloudflare deployments are still pending.
+flows, ZIP/CSV export, and the offline capture queue. Backend tests and the
+frontend typecheck/build pass; the Playwright suite covers all six section
+checkpoints against a local Supabase instance in CI. A hosted/live Supabase
+smoke, Gate 1 (30 real bills), Gate 2 and the Cloud Run/Cloudflare
+deployments are still pending.
+
+Watch a 25-second synthetic walkthrough in [`docs/demo.gif`](docs/demo.gif).
+See [`docs/WRITEUP.md`](docs/WRITEUP.md) for the portfolio write-up and
+[`docs/DEMO.md`](docs/DEMO.md) for the demo storyboard. Release notes live in
+[`RELEASE_NOTES.md`](RELEASE_NOTES.md).
 
 ## Stack
 
@@ -32,6 +39,7 @@ FastAPI with the service-role key and an explicit membership check.
 frontend/            React PWA, Playwright config and e2e/
 backend/             FastAPI app, unit tests and API-level e2e/
 supabase/            migrations, RLS/storage, seed and local config
+docs/                portfolio write-up and demo storyboard
 .github/workflows/   ci.yml, e2e.yml, keepalive.yml
 .env.example         backend + frontend values in one place
 .env.e2e.example     harness values (copy to .env.e2e)
@@ -89,7 +97,7 @@ the browser.
 
 ```powershell
 py -m venv backend\.venv
-backend\.venv\Scripts\python.exe -m pip install -e "backend[dev]"
+backend\.venv\Scripts\python.exe -m pip install -e "backend[dev,capture]"
 Set-Location backend
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
 ```
@@ -107,6 +115,14 @@ npm run dev
 
 Open <http://127.0.0.1:5173>. Sign up, create a household, then use the invite
 code from the Household screen to join from a second account.
+
+### Offline capture
+
+If the browser is offline when a bill is saved (or the upload request never
+reaches the API), BillBox stores the pages in a user-scoped IndexedDB queue. A
+banner in the header shows the queued bills; it retries automatically on
+reconnect and offers **Retry now** and discard controls. Signing out leaves
+another account's queue untouched.
 
 ## Checks
 

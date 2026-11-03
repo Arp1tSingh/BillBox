@@ -436,8 +436,8 @@ Mobile-first: bottom navigation (Home, Scan, Household), safe-area insets,
 44 px tap targets. Desktop: centred max-width layout.
 
 PWA: manifest `BillBox`, theme colour, 192/512 + maskable icons, standalone,
-`start_url=/`, offline shell fallback only (no offline capture in MVP).
-Frontend SPA fallback via Cloudflare Pages `_redirects`.
+`start_url=/`, offline shell fallback and an offline capture queue (IndexedDB,
+§12). Frontend SPA fallback via Cloudflare Pages `_redirects`.
 
 ---
 
@@ -697,14 +697,17 @@ E2E checkpoint:
 
 Build:
 - [x] Export ZIP + CSV; tests and CI hardening; accessibility.
-- [ ] Offline-friendly capture (IndexedDB queue); README, demo GIF, write-up.
+- [x] Offline-friendly capture (IndexedDB queue); README, demo GIF, write-up.
 - [ ] Optional later: question answering, semantic search (pgvector), email
       intake, private vaults.
 
 > **Section 6 status:** household export is implemented (`GET
 > /households/export`) with a ZIP of `receipts.csv` plus original pages, backend
-> tests and an export Playwright test. The PWA shell works offline via Workbox;
-> an upload queue, demo media and the final write-up remain.
+> tests and an export Playwright test. The PWA shell works offline via Workbox,
+> and bills captured without a connection are queued in IndexedDB and uploaded
+> automatically on reconnect (E2E-6.2, desktop Chromium/mobile Chrome/mobile
+> Safari). Demo media (`docs/demo.gif` and synthetic screenshots) and the
+> portfolio write-up are in place; Lighthouse CI is still open.
 
 E2E checkpoint:
 
