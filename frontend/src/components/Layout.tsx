@@ -4,6 +4,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../auth/AuthProvider'
 import { ApiWakingBanner } from './ApiWakingBanner'
+import { UploadQueueBanner } from './UploadQueueBanner'
 import { useHousehold } from '../hooks/useHousehold'
 
 const navItems = [
@@ -97,6 +98,7 @@ export function Layout() {
           </button>
         </div>
         <ApiWakingBanner />
+        <UploadQueueBanner />
       </header>
 
       <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-6 md:pb-12">

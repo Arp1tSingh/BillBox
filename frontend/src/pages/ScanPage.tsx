@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Camera,
+  CloudOff,
   FileText,
   ImagePlus,
   Loader2,
@@ -14,6 +15,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 
 import { ErrorAlert } from '../components/ErrorAlert'
+import { useUploadQueue } from '../components/UploadQueueProvider'
 import { api, ApiError } from '../lib/api'
 import {
   ImageError,
@@ -27,11 +29,13 @@ import type { ReceiptUploadResponse } from '../lib/types'
 export function ScanPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { enqueue } = useUploadQueue()
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
   const [pages, setPages] = useState<PreparedPage[]>([])
   const [skipAi, setSkipAi] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [phase, setPhase] = useState<string | null>(null)
 
@@ -41,6 +45,7 @@ export function ScanPage() {
   async function addFiles(list: FileList | null) {
     if (!list || list.length === 0) return
     setError(null)
+    setNotice(null)
     const files = Array.from(list)
     try {
       const prepared = await preparePages(files, pages.length)
@@ -78,6 +83,28 @@ export function ScanPage() {
     })
   }
 
+  async function saveForLater() {
+    setError(null)
+    try {
+      await enqueue(
+        pages.map((page) => page.file),
+        skipAi,
+      )
+      releasePages(pages)
+      setPages([])
+      setNotice('Saved offline. This bill will upload automatically when you are back online.')
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Could not save this bill offline. Try again when you have a connection.',
+      )
+    } finally {
+      setBusy(false)
+      setPhase(null)
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (pages.length === 0) {
@@ -85,7 +112,14 @@ export function ScanPage() {
       return
     }
     setError(null)
+    setNotice(null)
     setBusy(true)
+
+    if (!navigator.onLine) {
+      await saveForLater()
+      return
+    }
+
     setPhase('Uploading your bill…')
 
     const form = new FormData()
@@ -98,7 +132,14 @@ export function ScanPage() {
     try {
       created = await api.upload<ReceiptUploadResponse>('/receipts', form)
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'Upload failed. Try again.')
+      if (!(caught instanceof ApiError)) {
+        // A fetch failure means the request never reached the API (for example,
+        // the connection dropped after the page loaded). Keep the bill instead
+        // of making the user select the pages again.
+        await saveForLater()
+        return
+      }
+      setError(caught.message)
       setBusy(false)
       setPhase(null)
       return
@@ -168,6 +209,16 @@ export function ScanPage() {
         />
 
         <ErrorAlert message={error} />
+
+        {notice ? (
+          <p
+            role="status"
+            className="flex items-start gap-2 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2.5 text-xs leading-5 text-teal-900"
+          >
+            <CloudOff size={15} className="mt-0.5 shrink-0" aria-hidden="true" />
+            {notice}
+          </p>
+        ) : null}
 
         {pages.length > 0 ? (
           <section aria-label="Selected pages" className="rounded-2xl border border-slate-200 bg-white p-4">
