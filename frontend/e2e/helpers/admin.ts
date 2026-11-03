@@ -189,3 +189,29 @@ export async function resetTestState(users: TestUser[]): Promise<void> {
     await deleteHousehold(householdId)
   }
 }
+
+export interface SeedReceiptInput {
+  title?: string
+  merchant?: string
+  amount?: string | number
+  bill_date?: string
+  raw_text?: string
+  bill_type?: string
+  tags?: string[]
+}
+
+export async function seedReceipt(
+  accessToken: string,
+  input: SeedReceiptInput,
+): Promise<{ id: string; tags: Array<{ slug: string }> }> {
+  const response = await fetch(`${env.apiBaseUrl}/test/receipts`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  })
+  if (!response.ok) throw new Error(`Could not seed receipt: ${await errorText(response)}`)
+  return (await response.json()) as { id: string; tags: Array<{ slug: string }> }
+}

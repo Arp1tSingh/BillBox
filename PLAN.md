@@ -559,14 +559,18 @@ E2E checkpoint:
 ### Section 2 — Day 2: Capture, upload and processing
 
 Build:
-- [ ] Scan screen: camera/file inputs, multi-page, compression, reorder,
+- [x] Scan screen: camera/file inputs, multi-page, compression, reorder,
       remove, skip-AI toggle.
-- [ ] Upload endpoint: validation, Storage writes, rows, 25 MB cap, PDF pages.
-- [ ] Process endpoint: atomic claim, idempotency, stale lock, skip-AI path.
-- [ ] Gemini client: prompt, schema, retry, mock mode for local dev.
-- [ ] Detail screen: signed-URL page viewer, processing/failed/ready states,
+- [x] Upload endpoint: validation, Storage writes, rows, 25 MB cap, PDF pages.
+- [x] Process endpoint: atomic claim, idempotency, stale lock, skip-AI path.
+- [x] Gemini client: prompt, schema, retry, mock mode for local dev.
+- [x] Detail screen: signed-URL page viewer, processing/failed/ready states,
       polling, Retry/Resume.
 - [ ] Deploy and smoke-test on a phone.
+
+> **Day 2 status:** build complete with unit/API tests and mock extraction.
+> Playwright, live Gemini and phone smoke tests still need a local Supabase
+> instance.
 
 E2E checkpoint:
 
@@ -588,11 +592,15 @@ E2E checkpoint:
 ### Section 3 — Day 3: Extraction quality, tagging and Gate 1
 
 Build:
-- [ ] `scripts/eval_extraction.py`; run 30 real bills (English, Hindi,
+- [x] `scripts/eval_extraction.py`; run 30 real bills (English, Hindi,
       Marathi, faded).
 - [ ] Iterate prompt, image compression and preprocessing on failures.
-- [ ] Rules tagging, merchant normalization, tag persistence, manual tagging.
+- [x] Rules tagging, merchant normalization, tag persistence, manual tagging.
 - [ ] Record per-bill predictions vs. manual truth in `evals/results.csv`.
+
+> **Day 3 status:** the eval harness, rules/AI tagging and manual tag flows are
+> implemented and unit-tested. Gate 1 still needs a live Gemini key and 30 real
+> bills; no real bill data is committed.
 
 E2E checkpoint:
 
@@ -620,11 +628,15 @@ editable and continue.
 ### Section 4 — Day 4: Tags, search, home and results
 
 Build:
-- [ ] Tags API and counts; add/remove with soft-delete semantics; bill_type
+- [x] Tags API and counts; add/remove with soft-delete semantics; bill_type
       sync.
-- [ ] Search parser + SQL RPC + indexes + ranking.
-- [ ] Home: search, tag chips, recent receipts, processing/failed states.
-- [ ] Results: filters (tag/date/amount), sort, pagination, empty states.
+- [x] Search parser + SQL RPC + indexes + ranking.
+- [x] Home: search, tag chips, recent receipts, processing/failed states.
+- [x] Results: filters (tag/date/amount), sort, pagination, empty states.
+
+> **Day 4 status:** search backend and UI are implemented, with parser/search
+> tests and a Playwright `section4.spec.ts`. The SQL RPC was smoke-tested on a
+> scratch Postgres 18 database; live Supabase and the E2E-4.x run are pending.
 
 E2E checkpoint:
 

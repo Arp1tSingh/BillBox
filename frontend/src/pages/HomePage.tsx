@@ -239,7 +239,7 @@ export function HomePage() {
               </select>
             </label>
           </div>
-          <ul className="mt-3 space-y-2.5">
+          <ul className="mt-3 space-y-2.5" data-testid="receipt-list">
             {receipts.items.map((receipt) => (
               <ReceiptCard key={receipt.id} receipt={receipt} />
             ))}
@@ -314,7 +314,10 @@ function ReceiptCard({ receipt }: { receipt: ReceiptSummary }) {
   const subtitle = receipt.merchant ?? receipt.title ?? receipt.bill_type ?? 'Bill'
 
   return (
-    <li className="rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-teal-200">
+    <li
+      data-testid="receipt-card"
+      className="rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-teal-200"
+    >
       <Link to={`/receipts/${receipt.id}`} className="flex items-center gap-3 p-3">
         <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100 text-slate-400">
           {receipt.thumbnail_url ? (

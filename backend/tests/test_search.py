@@ -253,3 +253,33 @@ async def test_search_is_household_scoped(
     )
     response = await client.get("/receipts", params={"q": "electricity"}, headers=auth("outsider"))
     assert response.status_code == 404
+
+
+async def test_test_seed_endpoint_creates_searchable_receipt(
+    client: AsyncClient, receipts_repo: FakeReceiptsRepository
+) -> None:
+    await create_household(client)
+    response = await client.post(
+        "/test/receipts",
+        json={
+            "title": "Seeded power bill",
+            "merchant": "Adani Electricity",
+            "amount": "4500.00",
+            "bill_date": "2026-02-01",
+            "raw_text": "बिजली बिल",
+            "bill_type": "electricity",
+            "tags": ["electricity"],
+        },
+        headers=auth("owner"),
+    )
+    assert response.status_code == 200, response.text
+    detail = response.json()
+    assert detail["status"] == "ready"
+    assert detail["amount"] == "4500.00"
+    assert [tag["slug"] for tag in detail["tags"]] == ["electricity"]
+
+    found = await client.get("/receipts?q=बिजली", headers=auth("owner"))
+    assert found.status_code == 200, found.text
+    body = found.json()
+    assert body["total"] == 1
+    assert body["items"][0]["id"] == detail["id"]

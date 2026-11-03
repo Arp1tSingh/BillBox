@@ -5,9 +5,11 @@ fields, and find it later by merchant, tag, amount or date. The product and
 architecture decisions live in [`BillBox-Blueprint.md`](BillBox-Blueprint.md);
 the build order and E2E checkpoints live in [`PLAN.md`](PLAN.md).
 
-**Status:** Day 1 scaffold is in place — auth, households, RLS, PWA shell and the
-Playwright harness. The Section 1 checkpoint still has to be run against a live
-local Supabase and deployed to Cloud Run and Cloudflare Pages.
+**Status:** Sections 1–4 are implemented — auth/households, capture and
+mockable extraction, rule/AI tagging, and natural-language search with tag,
+amount, date, sort and pagination filters. Unit/parser/search tests pass and the
+frontend builds. Live Supabase, Playwright, Gate 1 (30 real bills) and the
+Cloud Run/Cloudflare deployments are still pending.
 
 ## Stack
 

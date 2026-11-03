@@ -108,7 +108,7 @@ as $$
       end as fts_hit,
       case
         when q.term is null then 0
-        when word_similarity(q.term, coalesce(r.merchant, '')) > 0.5 then 1
+        when extensions.word_similarity(q.term, coalesce(r.merchant, '')) > 0.5 then 1
         else 0
       end as merchant_hit,
       case
