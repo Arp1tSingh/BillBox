@@ -15,7 +15,13 @@ export interface QueuedFile {
   name: string
   type: string
   lastModified: number
-  blob: Blob
+  /**
+   * Page bytes. ArrayBuffers are stored instead of Blob/File objects because
+   * WebKit refuses to clone Blob values into IndexedDB.
+   */
+  data?: ArrayBuffer
+  /** Legacy entries written before the ArrayBuffer migration. */
+  blob?: Blob
 }
 
 export interface QueuedUpload {
@@ -85,12 +91,14 @@ export async function enqueueUpload(
       attempts: 0,
       lastError: null,
       receiptId: null,
-      files: files.map((file) => ({
-        name: file.name,
-        type: file.type,
-        lastModified: file.lastModified,
-        blob: file,
-      })),
+      files: await Promise.all(
+        files.map(async (file) => ({
+          name: file.name,
+          type: file.type,
+          lastModified: file.lastModified,
+          data: await file.arrayBuffer(),
+        })),
+      ),
     }
     const transaction = database.transaction(STORE, 'readwrite')
     transaction.objectStore(STORE).add(item)
@@ -155,7 +163,11 @@ export async function markQueuedUploadUploaded(id: string, receiptId: string): P
 }
 
 export function fileFromQueued(item: QueuedFile): File {
-  return new File([item.blob], item.name, {
+  const source = item.data ?? item.blob
+  if (!source) {
+    throw new Error('Queued file is unreadable. Discard it and save the bill again.')
+  }
+  return new File([source], item.name, {
     type: item.type,
     lastModified: item.lastModified,
   })
